@@ -1,6 +1,7 @@
 package com.HideoKuzeGits.httpserver.mapping;
 
 
+import com.HideoKuzeGits.httpserver.handlers.HttpRequestHandler;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 

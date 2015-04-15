@@ -1,7 +1,7 @@
 package com.HideoKuzeGits.httpserver;
 
 import com.HideoKuzeGits.httpserver.mapping.HandlerMapping;
-import com.HideoKuzeGits.httpserver.mapping.HttpRequestHandler;
+import com.HideoKuzeGits.httpserver.handlers.HttpRequestHandler;
 import com.HideoKuzeGits.httpserver.mapping.UrlHandlerMapping;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,9 +31,22 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(url);
             String path = queryStringDecoder.path();
             HttpRequestHandler handler = mapping.getHandler(path);
-            String responseBody = handler.processRequest(request, response);
-            if (responseBody != null)
-                response.content().writeBytes(responseBody.getBytes(Charset.forName("UTF-8")));
+            if (handler != null) {
+
+                String responseBody;
+
+                try {
+                    responseBody = handler.processRequest(request, response);
+                } catch (Exception e) {
+                    responseBody = e.toString();
+                    response.setStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                if (responseBody != null)
+                    response.content().writeBytes(responseBody.getBytes(Charset.forName("UTF-8")));
+            } else {
+                response.setStatus(HttpResponseStatus.NOT_FOUND);
+            }
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         }
 
