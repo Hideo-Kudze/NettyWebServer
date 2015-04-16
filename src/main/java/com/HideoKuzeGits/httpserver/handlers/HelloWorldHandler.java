@@ -11,7 +11,6 @@ public class HelloWorldHandler implements HttpRequestHandler{
     @Override
     public String processRequest(HttpRequest request, HttpResponse response) throws InterruptedException {
 
-
         Thread.sleep(10 * 1000);
         return "Hello World";
     }

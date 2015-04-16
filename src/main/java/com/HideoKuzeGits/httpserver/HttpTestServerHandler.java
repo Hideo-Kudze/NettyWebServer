@@ -31,9 +31,9 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(url);
             String path = queryStringDecoder.path();
             HttpRequestHandler handler = mapping.getHandler(path);
-            if (handler != null) {
+            String responseBody;
 
-                String responseBody;
+            if (handler != null) {
 
                 try {
                     responseBody = handler.processRequest(request, response);
@@ -41,14 +41,16 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
                     responseBody = e.toString();
                     response.setStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
-
-                if (responseBody != null)
-                    response.content().writeBytes(responseBody.getBytes(Charset.forName("UTF-8")));
             } else {
                 response.setStatus(HttpResponseStatus.NOT_FOUND);
+                responseBody = "Page not found";
             }
+
+            if (responseBody != null)
+                response.content().writeBytes(responseBody.getBytes(Charset.forName("UTF-8")));
+
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
-        }
+         }
 
 
         if (msg instanceof LastHttpContent) {

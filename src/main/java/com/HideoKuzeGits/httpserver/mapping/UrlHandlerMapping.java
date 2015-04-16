@@ -30,7 +30,7 @@ public class UrlHandlerMapping implements HandlerMapping {
 
             Class<?> clazz = classInfo.load();
 
-            if (clazz.isAnnotationPresent(RequestMapping.class) || clazz.isAssignableFrom(HttpRequestHandler.class)) {
+            if (clazz.isAnnotationPresent(RequestMapping.class) && HttpRequestHandler.class.isAssignableFrom(clazz)) {
                 String value = clazz.getAnnotation(RequestMapping.class).value();
                 if (value.equals(path)) {
                     try {

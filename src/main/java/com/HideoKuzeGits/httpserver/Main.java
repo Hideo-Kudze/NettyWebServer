@@ -12,8 +12,8 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
 
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(2);
+        EventLoopGroup workerGroup = new NioEventLoopGroup(2);
 
         try {
             ServerBootstrap b = new ServerBootstrap();

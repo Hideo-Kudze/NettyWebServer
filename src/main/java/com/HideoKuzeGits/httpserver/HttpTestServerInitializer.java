@@ -10,13 +10,23 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel> {
 
 
+
+
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
 
         ChannelPipeline p = ch.pipeline();
 
+
+        TrafficStatisticHandler trafficStatisticHandler = new TrafficStatisticHandler();
+
+        p.addLast(trafficStatisticHandler);
+        p.addLast(ConnectionCountHandler.getInstance());
         p.addLast(new HttpRequestDecoder());
         p.addLast(new HttpResponseEncoder());
+        p.addLast(trafficStatisticHandler.getUrlHandler());
+        p.addLast(trafficStatisticHandler.getRedirectHandler());
         p.addLast(new HttpTestServerHandler());
+
     }
 }
