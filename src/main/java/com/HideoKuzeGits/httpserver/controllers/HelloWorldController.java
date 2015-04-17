@@ -1,11 +1,11 @@
-package com.HideoKuzeGits.httpserver.handlers;
+package com.HideoKuzeGits.httpserver.controllers;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import com.HideoKuzeGits.httpserver.mapping.RequestMapping;
 
 @RequestMapping("/")
-public class HelloWorldHandler implements HttpRequestHandler{
+public class HelloWorldController implements HttpRequestHandler{
 
 
     @Override

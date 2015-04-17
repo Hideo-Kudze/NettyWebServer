@@ -1,5 +1,7 @@
 package com.HideoKuzeGits.httpserver;
 
+import com.HideoKuzeGits.httpserver.status.handlers.ConnectionCountHandler;
+import com.HideoKuzeGits.httpserver.status.handlers.TrafficStatisticHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;

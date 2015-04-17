@@ -1,7 +1,7 @@
 package com.HideoKuzeGits.httpserver.mapping;
 
 
-import com.HideoKuzeGits.httpserver.handlers.HttpRequestHandler;
+import com.HideoKuzeGits.httpserver.controllers.HttpRequestHandler;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 
@@ -21,7 +21,7 @@ public class UrlHandlerMapping implements HandlerMapping {
 
         try {
             ClassPath classPath = ClassPath.from(this.getClass().getClassLoader());
-            allClasses = classPath.getTopLevelClasses("com.HideoKuzeGits.httpserver.handlers");
+            allClasses = classPath.getTopLevelClasses("com.HideoKuzeGits.httpserver.controllers");
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,4 +1,4 @@
-package com.HideoKuzeGits.httpserver;
+package com.HideoKuzeGits.httpserver.status.handlers;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -26,7 +26,7 @@ public class ConnectionCountHandler extends ChannelDuplexHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        System.out.println(connectionsCount.incrementAndGet());
+        connectionsCount.incrementAndGet();
         super.channelActive(ctx);
     }
 
@@ -34,7 +34,7 @@ public class ConnectionCountHandler extends ChannelDuplexHandler {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
-        System.out.println(connectionsCount.decrementAndGet());
+        connectionsCount.decrementAndGet();
         super.channelInactive(ctx);
     }
 

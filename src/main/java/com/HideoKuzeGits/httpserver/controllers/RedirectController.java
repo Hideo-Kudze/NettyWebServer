@@ -1,4 +1,4 @@
-package com.HideoKuzeGits.httpserver.handlers;
+package com.HideoKuzeGits.httpserver.controllers;
 
 import com.HideoKuzeGits.httpserver.mapping.RequestMapping;
 import io.netty.handler.codec.http.HttpRequest;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 
 @RequestMapping("/redirect")
-public class RedirectHandler implements HttpRequestHandler{
+public class RedirectController implements HttpRequestHandler {
 
     @Override
     public String processRequest(HttpRequest request, HttpResponse response) throws HttpHandlerException {

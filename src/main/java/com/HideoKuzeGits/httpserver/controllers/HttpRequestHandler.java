@@ -1,4 +1,4 @@
-package com.HideoKuzeGits.httpserver.handlers;
+package com.HideoKuzeGits.httpserver.controllers;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;

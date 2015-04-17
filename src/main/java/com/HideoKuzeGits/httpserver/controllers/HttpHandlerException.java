@@ -1,4 +1,4 @@
-package com.HideoKuzeGits.httpserver.handlers;
+package com.HideoKuzeGits.httpserver.controllers;
 
 public class HttpHandlerException extends Exception {
 

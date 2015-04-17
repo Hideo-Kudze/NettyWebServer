@@ -1,7 +1,7 @@
-package com.HideoKuzeGits.httpserver;
+package com.HideoKuzeGits.httpserver.status.handlers;
 
-import com.HideoKuzeGits.httpserver.logs.ConnectionLog;
-import com.HideoKuzeGits.httpserver.logs.ConnectionLogDao;
+import com.HideoKuzeGits.httpserver.status.logs.ConnectionLog;
+import com.HideoKuzeGits.httpserver.status.logs.ConnectionLogSaver;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
@@ -13,9 +13,10 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
 
     private Integer readBytes = 0;
     private Integer writtenBytes = 0;
-    private Long startTime;
+    private Long startTimeNanos;
+    private Long startTimeMillis;
     private Long lastReadTime;
-    private Long lastWriteTime;
+    private Long writeDuration = 0l;
     private String url;
     private String ip;
     private String redirectUri;
@@ -53,7 +54,8 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        startTime = System.nanoTime();
+        startTimeNanos = System.nanoTime();
+        startTimeMillis = System.currentTimeMillis();
         InetSocketAddress inetSocketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
         ip = inetSocketAddress.getAddress().getHostAddress();
         super.channelActive(ctx);
@@ -71,15 +73,17 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
+        final Long writeStartTime = System.nanoTime();
+
         channelWritabilityChanged(ctx);
 
-        ByteBuf byteBuf = (ByteBuf) msg;
-        writtenBytes += byteBuf.writableBytes();
+        final ByteBuf byteBuf = (ByteBuf) msg;
+        writtenBytes += byteBuf.writerIndex();
 
         ctx.write(msg, promise).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
-                lastWriteTime = System.nanoTime();
+                writeDuration += System.nanoTime() - writeStartTime;
             }
         });
     }
@@ -88,7 +92,7 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
         ConnectionLog connectionLog = createConnectionLog();
-        new ConnectionLogDao().write(connectionLog);
+        ConnectionLogSaver.getInstance().save(connectionLog);
         super.channelInactive(ctx);
     }
 
@@ -99,20 +103,20 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
     public ConnectionLog createConnectionLog() {
 
 
-        Float downloadSpeed;
+        Double downloadSpeed;
         if (lastReadTime != null)
-            downloadSpeed = (((float) readBytes) / (lastReadTime - startTime)) * 1e9f;
+            downloadSpeed = (((double)readBytes) / (lastReadTime - startTimeNanos)) * 1e9;
         else
-            downloadSpeed = 0f;
+            downloadSpeed = 0d;
 
-        Float uploadSpeed;
-        if (lastWriteTime != null)
-            uploadSpeed = ((float) writtenBytes) / (lastWriteTime - startTime) * 1e9f;
+        Double uploadSpeed;
+        if (writeDuration != 0)
+            uploadSpeed = (((double)writtenBytes) / writeDuration) * 1e9;
         else
-            uploadSpeed = 0f;
+            uploadSpeed = 0d;
 
 
-        ConnectionLog connectionLog = new ConnectionLog(ip, url, startTime, readBytes, writtenBytes);
+        ConnectionLog connectionLog = new ConnectionLog(ip, url, startTimeMillis, readBytes, writtenBytes);
         connectionLog.setRedirectUrl(redirectUri);
         connectionLog.setDownloadSpeed(downloadSpeed);
         connectionLog.setUploadSpeed(uploadSpeed);

@@ -1,7 +1,7 @@
 package com.HideoKuzeGits.httpserver;
 
 import com.HideoKuzeGits.httpserver.mapping.HandlerMapping;
-import com.HideoKuzeGits.httpserver.handlers.HttpRequestHandler;
+import com.HideoKuzeGits.httpserver.controllers.HttpRequestHandler;
 import com.HideoKuzeGits.httpserver.mapping.UrlHandlerMapping;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -38,6 +38,7 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
                 try {
                     responseBody = handler.processRequest(request, response);
                 } catch (Exception e) {
+                    e.printStackTrace();
                     responseBody = e.toString();
                     response.setStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
