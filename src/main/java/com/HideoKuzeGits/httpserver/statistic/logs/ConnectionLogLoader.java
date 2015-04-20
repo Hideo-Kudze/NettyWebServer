@@ -1,25 +1,35 @@
-package com.HideoKuzeGits.httpserver.status.logs;
+package com.HideoKuzeGits.httpserver.statistic.logs;
 
-import com.HideoKuzeGits.httpserver.Main;
+import com.HideoKuzeGits.httpserver.Server;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
+/**
+ * Load connection logs.
+ */
+
+//Single instance per server.
 public class ConnectionLogLoader {
 
-    public List<ConnectionLog> load() {
 
-        List<ConnectionLog> connectionLogs = new ArrayList<ConnectionLog>();
+    /**
+     *  Load connection logs from files in log directory.
+     * @return connections logs from log directory.
+     */
+    public SortedSet<ConnectionLog> load() {
 
-        File[] files = Main.logDir.listFiles();
+        TreeSet<ConnectionLog> connectionLogs = new TreeSet<ConnectionLog>();
+
+        File[] files = Server.logDir.listFiles();
 
         for (File file : files) {
 
             Scanner in = null;
             try {
                 in = new Scanner(file);
+
+                //Skip header line.
                 in.nextLine();
 
                 while (in.hasNext()) {
@@ -32,9 +42,7 @@ public class ConnectionLogLoader {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                 }
-
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -47,13 +55,19 @@ public class ConnectionLogLoader {
         return connectionLogs;
     }
 
+    /**
+     *
+     * Parse connection log from string.
+     *
+     * @param line string representation of connection log.
+     */
     private ConnectionLog parse(String line) {
 
         ConnectionLog connectionLog;
         String[] fields = line.split("     ");
 
 
-        if (fields.length < 7)
+        if (fields.length < 6)
             return null;
 
         connectionLog = new ConnectionLog();
@@ -62,12 +76,11 @@ public class ConnectionLogLoader {
         connectionLog.setUrl(fields[2]);
         connectionLog.setReceivedBytes(Integer.valueOf(fields[3]));
         connectionLog.setSentBytes(Integer.valueOf(fields[4]));
-        connectionLog.setDownloadSpeed(Double.valueOf(fields[5]));
-        connectionLog.setUploadSpeed(Double.valueOf(fields[6]));
+        connectionLog.setSpeed(Integer.valueOf(fields[5]));
 
 
-        if (fields.length == 8)
-            connectionLog.setRedirectUrl(fields[7]);
+        if (fields.length == 7)
+            connectionLog.setRedirectUrl(fields[6]);
 
         return connectionLog;
     }

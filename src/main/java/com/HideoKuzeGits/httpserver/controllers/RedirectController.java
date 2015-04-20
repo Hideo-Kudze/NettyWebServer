@@ -9,7 +9,9 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * Redirects to url in request parameters.
+ */
 @RequestMapping("/redirect")
 public class RedirectController implements HttpRequestHandler {
 

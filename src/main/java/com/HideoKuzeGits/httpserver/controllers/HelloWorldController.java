@@ -4,7 +4,10 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import com.HideoKuzeGits.httpserver.mapping.RequestMapping;
 
-@RequestMapping("/")
+/**
+ * Return string "Hello world"
+ */
+@RequestMapping("/hello")
 public class HelloWorldController implements HttpRequestHandler{
 
 

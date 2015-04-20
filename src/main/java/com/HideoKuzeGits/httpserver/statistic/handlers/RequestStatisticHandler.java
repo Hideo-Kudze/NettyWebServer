@@ -1,32 +1,54 @@
-package com.HideoKuzeGits.httpserver.status.handlers;
+package com.HideoKuzeGits.httpserver.statistic.handlers;
 
-import com.HideoKuzeGits.httpserver.status.logs.ConnectionLog;
-import com.HideoKuzeGits.httpserver.status.logs.ConnectionLogSaver;
+import com.HideoKuzeGits.httpserver.statistic.ServerStatistic;
+import com.HideoKuzeGits.httpserver.statistic.logs.ConnectionLog;
+import com.HideoKuzeGits.httpserver.statistic.logs.ConnectionLogSaver;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 
 import java.net.InetSocketAddress;
 
-public class TrafficStatisticHandler extends ChannelDuplexHandler {
+
+/**
+ * Gather statistic about request.
+ */
+//Instance per request.
+public class RequestStatisticHandler extends ChannelDuplexHandler {
 
 
-    private Integer readBytes = 0;
-    private Integer writtenBytes = 0;
-    private Long startTimeNanos;
-    private Long startTimeMillis;
-    private Long lastReadTime;
-    private Long writeDuration = 0l;
     private String url;
     private String ip;
     private String redirectUri;
 
+    /**
+     * Start time of the request,
+     */
+    private Long startTimeNanoseconds;
+    private Long startTimeMiliseconds;
 
+
+
+    private Integer readBytes = 0;
+
+    private Long lastWriteCompleteTime = 0l;
+    private Integer writtenBytes = 0;
+
+    private ConnectionLogSaver connectionLogSaver;
+
+    /**
+     * ServerStatistic to merge it with new logs.
+     */
+    private ServerStatistic serverStatistic;
+
+    /**
+     * Get request url.
+     */
     private ChannelInboundHandlerAdapter urlHandler = new ChannelInboundHandlerAdapter() {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            if (msg instanceof DefaultHttpRequest){
+            if (msg instanceof DefaultHttpRequest) {
                 url = ((DefaultHttpRequest) msg).getUri();
                 QueryStringDecoder queryStringDecoder = new QueryStringDecoder(url);
                 url = queryStringDecoder.path();
@@ -35,7 +57,9 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
         }
     };
 
-
+    /**
+     * Get redirect url if response contains it.
+     */
     private ChannelOutboundHandler redirectHandler = new ChannelOutboundHandlerAdapter() {
 
         @Override
@@ -46,16 +70,20 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
                 if (msg1.getStatus().equals(HttpResponseStatus.MOVED_PERMANENTLY))
                     redirectUri = ((DefaultFullHttpResponse) msg).headers().get("location");
 
-            super.write(ctx, msg, promise);
+                super.write(ctx, msg, promise);
             }
         }
     };
 
+
+    /**
+     * Connection established.
+     */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        startTimeNanos = System.nanoTime();
-        startTimeMillis = System.currentTimeMillis();
+        startTimeNanoseconds = System.nanoTime();
+        startTimeMiliseconds = System.currentTimeMillis();
         InetSocketAddress inetSocketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
         ip = inetSocketAddress.getAddress().getHostAddress();
         super.channelActive(ctx);
@@ -65,34 +93,34 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
         ByteBuf byteBuf = (ByteBuf) msg;
-        readBytes += byteBuf.readableBytes();
-        lastReadTime = System.nanoTime();
+        readBytes += byteBuf.readableBytes() + byteBuf.readerIndex();
         super.channelRead(ctx, msg);
     }
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
-        final Long writeStartTime = System.nanoTime();
-
-        channelWritabilityChanged(ctx);
-
         final ByteBuf byteBuf = (ByteBuf) msg;
-        writtenBytes += byteBuf.writerIndex();
+        writtenBytes += byteBuf.readableBytes() + byteBuf.readerIndex();
 
         ctx.write(msg, promise).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
-                writeDuration += System.nanoTime() - writeStartTime;
+
+                lastWriteCompleteTime = System.nanoTime();
             }
         });
     }
 
+    /**
+     * Calls when connection ended. Save connection logs. Merge server statistic with new log.
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
         ConnectionLog connectionLog = createConnectionLog();
-        ConnectionLogSaver.getInstance().save(connectionLog);
+        connectionLogSaver.save(connectionLog);
+        serverStatistic.addData(connectionLog);
         super.channelInactive(ctx);
     }
 
@@ -100,30 +128,33 @@ public class TrafficStatisticHandler extends ChannelDuplexHandler {
         return urlHandler;
     }
 
+    /**
+     * Process request statistic and produce connection log.
+     * @return log of this request.
+     */
     public ConnectionLog createConnectionLog() {
 
-
-        Double downloadSpeed;
-        if (lastReadTime != null)
-            downloadSpeed = (((double)readBytes) / (lastReadTime - startTimeNanos)) * 1e9;
-        else
-            downloadSpeed = 0d;
-
-        Double uploadSpeed;
+        Integer speed = 0;
+        Long writeDuration = lastWriteCompleteTime - startTimeNanoseconds;
         if (writeDuration != 0)
-            uploadSpeed = (((double)writtenBytes) / writeDuration) * 1e9;
-        else
-            uploadSpeed = 0d;
+            speed =  (int)(writtenBytes* 1e9 / writeDuration);
 
-
-        ConnectionLog connectionLog = new ConnectionLog(ip, url, startTimeMillis, readBytes, writtenBytes);
+        ConnectionLog connectionLog = new ConnectionLog(ip, url, startTimeMiliseconds, readBytes, writtenBytes);
         connectionLog.setRedirectUrl(redirectUri);
-        connectionLog.setDownloadSpeed(downloadSpeed);
-        connectionLog.setUploadSpeed(uploadSpeed);
+        connectionLog.setSpeed(speed);
         return connectionLog;
     }
 
     public ChannelOutboundHandler getRedirectHandler() {
         return redirectHandler;
+    }
+
+
+    public void setConnectionLogSaver(ConnectionLogSaver connectionLogSaver) {
+        this.connectionLogSaver = connectionLogSaver;
+    }
+
+    public void setServerStatistic(ServerStatistic serverStatistic) {
+        this.serverStatistic = serverStatistic;
     }
 }

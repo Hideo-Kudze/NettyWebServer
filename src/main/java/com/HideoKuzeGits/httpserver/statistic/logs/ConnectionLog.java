@@ -1,21 +1,29 @@
-package com.HideoKuzeGits.httpserver.status.logs;
+package com.HideoKuzeGits.httpserver.statistic.logs;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Statistic of one http request.
+ */
 public class ConnectionLog implements Comparable<ConnectionLog> {
+
 
     private String ip;
     private String url;
+
+
+    /**
+     * compareTo(), hashCode() and equals() based on this field.
+      */
     private Long time;
     private Integer receivedBytes;
     private Integer sentBytes;
 
     //bytes per second
-    private Double downloadSpeed;
-    private Double uploadSpeed;
+    private Integer speed;
     private String redirectUrl;
 
 
@@ -84,21 +92,12 @@ public class ConnectionLog implements Comparable<ConnectionLog> {
         this.receivedBytes = receivedBytes;
     }
 
-    public Double getDownloadSpeed() {
-        return downloadSpeed;
+    public Integer getSpeed() {
+        return speed;
     }
 
-    public void setDownloadSpeed(Double downloadSpeed) {
-
-        this.downloadSpeed = (double) Math.round(downloadSpeed * 100) / 100;
-    }
-
-    public Double getUploadSpeed() {
-        return uploadSpeed;
-    }
-
-    public void setUploadSpeed(Double uploadSpeed) {
-        this.uploadSpeed = (double) Math.round(uploadSpeed * 100) / 100;
+    public void setSpeed(Integer speed) {
+        this.speed = speed;
     }
 
     public String getRedirectUrl() {
@@ -109,10 +108,16 @@ public class ConnectionLog implements Comparable<ConnectionLog> {
         this.redirectUrl = redirectUrl;
     }
 
+    /**
+     *
+     * Fields values separated with five space.
+     *
+     * @return string representation of connection log.
+     */
     @Override
     public String toString() {
         String connectionLogString = getTimeStamp() + "     " + ip + "     " + url + "     " + receivedBytes + "     " +
-                sentBytes + "     " + downloadSpeed + "     " + uploadSpeed;
+                sentBytes + "     " + speed;
 
         if (redirectUrl != null)
             connectionLogString += "     " + redirectUrl;
@@ -128,6 +133,25 @@ public class ConnectionLog implements Comparable<ConnectionLog> {
         else if (time == c.time)
             return 0;
         else
-            return -1;
+            return 1;
+    }
+
+    @Override
+    public int hashCode() {
+        return time.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+
+        return time == ((ConnectionLog)obj).time;
+
     }
 }

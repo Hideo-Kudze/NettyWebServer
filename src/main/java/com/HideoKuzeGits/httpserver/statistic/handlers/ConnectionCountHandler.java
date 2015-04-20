@@ -1,4 +1,4 @@
-package com.HideoKuzeGits.httpserver.status.handlers;
+package com.HideoKuzeGits.httpserver.statistic.handlers;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -6,21 +6,17 @@ import io.netty.channel.ChannelHandlerContext;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Monitor the number of current connections with server.
+ */
+
+//Single instance per server.
 @ChannelHandler.Sharable
 public class ConnectionCountHandler extends ChannelDuplexHandler {
 
     public static AtomicInteger connectionsCount = new AtomicInteger(0);
-    private static ConnectionCountHandler connectionCountHandler;
 
-    private ConnectionCountHandler() {
-    }
-
-    public synchronized static ConnectionCountHandler getInstance() {
-
-        if (connectionCountHandler == null)
-            connectionCountHandler = new ConnectionCountHandler();
-
-        return connectionCountHandler;
+    public ConnectionCountHandler() {
     }
 
     @Override
@@ -38,7 +34,11 @@ public class ConnectionCountHandler extends ChannelDuplexHandler {
         super.channelInactive(ctx);
     }
 
-    public static int getConnectionsCount() {
+    /**
+     *  Return current connections count.
+     * @return current connections count.
+     */
+    public int getConnectionsCount() {
         return connectionsCount.get();
     }
 }
