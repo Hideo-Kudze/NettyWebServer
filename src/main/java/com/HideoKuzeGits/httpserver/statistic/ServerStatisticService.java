@@ -30,7 +30,7 @@ public class ServerStatisticService {
         Configuration cfg = new Configuration();
         cfg.setClassForTemplateLoading(this.getClass(), "/");
         try {
-            template = cfg.getTemplate("Tables.ftl");
+            template = cfg.getTemplate("Tables.ftl", "UTF-8");
         } catch (IOException e) {
             e.printStackTrace();
         }

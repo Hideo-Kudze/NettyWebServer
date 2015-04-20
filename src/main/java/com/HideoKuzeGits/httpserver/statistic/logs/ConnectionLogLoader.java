@@ -27,7 +27,7 @@ public class ConnectionLogLoader {
 
             Scanner in = null;
             try {
-                in = new Scanner(file);
+                in = new Scanner(file, "UTF-8");
 
                 //Skip header line.
                 in.nextLine();
