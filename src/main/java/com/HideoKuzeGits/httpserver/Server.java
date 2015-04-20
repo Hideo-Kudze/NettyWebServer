@@ -46,11 +46,10 @@ public class Server {
             return;
         }
 
-
         createLogDir();
 
-        EventLoopGroup bossGroup = new NioEventLoopGroup(50);
-        EventLoopGroup workerGroup = new NioEventLoopGroup(50);
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         try {
 
