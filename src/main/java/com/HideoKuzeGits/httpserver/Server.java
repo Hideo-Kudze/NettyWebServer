@@ -2,8 +2,6 @@ package com.HideoKuzeGits.httpserver;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -67,24 +65,6 @@ public class Server {
                 public void run() {
                     Server.stopCurrentServer();
                     serverInitializer.stop();
-                }
-            });
-
-
-            serverChanel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-                @Override
-                public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                    super.channelActive(ctx);
-                }
-
-                @Override
-                public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                    super.channelInactive(ctx);
-                }
-
-                @Override
-                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                    super.channelRead(ctx, msg);
                 }
             });
 
