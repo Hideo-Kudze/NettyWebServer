@@ -2,6 +2,8 @@ package com.HideoKuzeGits.httpserver;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -9,7 +11,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -53,7 +54,7 @@ public class Server {
 
         try {
 
-
+            //Stop server when SIGINT arrived.
             ServerBootstrap b = new ServerBootstrap();
             final HttpTestServerInitializer serverInitializer = new HttpTestServerInitializer();
             b.group(bossGroup, workerGroup)
@@ -61,7 +62,7 @@ public class Server {
                     .childHandler(serverInitializer);
             serverChanel = b.bind(port).channel();
 
-            //Stop server when SIGINT arrived.
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     Server.stopCurrentServer();
@@ -69,7 +70,28 @@ public class Server {
                 }
             });
 
+
+            serverChanel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                @Override
+                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                    super.channelActive(ctx);
+                }
+
+                @Override
+                public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                    super.channelInactive(ctx);
+                }
+
+                @Override
+                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                    super.channelRead(ctx, msg);
+                }
+            });
+
             serverChanel.closeFuture().sync();
+
+
+
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
@@ -91,8 +113,6 @@ public class Server {
             String urlString = "http://localhost:8080/stopServer";
             URL url = new URL(urlString);
             ((HttpURLConnection)url.openConnection()).getResponseCode();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -37,7 +37,7 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
 
-         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
         response.headers().add("content-type", "text/html; charset=UTF-8");
 
         if (msg instanceof HttpRequest) {

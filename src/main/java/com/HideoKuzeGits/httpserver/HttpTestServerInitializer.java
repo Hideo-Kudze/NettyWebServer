@@ -95,7 +95,7 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
 
         //Outbound handler that handle information about redirect urls right after HttpTestServerHandler send it.
         p.addLast(requestStatisticHandler.getRedirectHandler());
-
+        p.addLast(new HelloWorldHandler());
         p.addLast(httpTestServerHandler);
     }
 
