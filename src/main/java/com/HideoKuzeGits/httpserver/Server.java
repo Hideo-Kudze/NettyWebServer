@@ -52,7 +52,7 @@ public class Server {
 
         try {
 
-            //Stop server when SIGINT arrived.
+
             ServerBootstrap b = new ServerBootstrap();
             final HttpTestServerInitializer serverInitializer = new HttpTestServerInitializer();
             b.group(bossGroup, workerGroup)
@@ -60,7 +60,7 @@ public class Server {
                     .childHandler(serverInitializer);
             serverChanel = b.bind(port).channel();
 
-
+            //Stop server when SIGINT arrived.
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     Server.stopCurrentServer();
