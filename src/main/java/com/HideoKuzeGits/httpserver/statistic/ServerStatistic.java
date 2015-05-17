@@ -55,7 +55,7 @@ public class ServerStatistic {
      * Buffer for connection logs that will be merged with statistic.
      */
     private BlockingQueue<ConnectionLog> connectionLogsQueue = new LinkedBlockingDeque<ConnectionLog>(10_000);
-
+    private boolean stopped = false;
 
 
     public ServerStatistic(SortedSet<ConnectionLog> connectionLogs) {
@@ -84,9 +84,11 @@ public class ServerStatistic {
             @Override
             public void run() {
 
-                while (true) {
+                while (!stopped) {
                     try {
-                        update(connectionLogsQueue.poll(10, TimeUnit.MINUTES));
+                        ConnectionLog connectionLog = connectionLogsQueue.poll(10, TimeUnit.MINUTES);
+                        if (connectionLog != null)
+                            update(connectionLog);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -100,12 +102,11 @@ public class ServerStatistic {
     }
 
     /**
-     *
      * Add connection log to queue to updating server statistic in future.
      *
      * @param connectionLog
      */
-    public void addData(ConnectionLog connectionLog){
+    public void addData(ConnectionLog connectionLog) {
         try {
             connectionLogsQueue.put(connectionLog);
         } catch (InterruptedException e) {
@@ -182,4 +183,7 @@ public class ServerStatistic {
         this.connectionsCurrentlyOpened = conceptionsCurrentlyOpened;
     }
 
+    public void stopMerging(){
+        stopped = true;
+    }
 }

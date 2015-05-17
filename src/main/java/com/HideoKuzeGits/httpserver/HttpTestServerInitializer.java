@@ -33,6 +33,7 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
     private ConnectionLogSaver connectionLogSaver;
     private AnnotationHandlerMapping annotationHandlerMapping;
     private ServerStatistic serverStatistic;
+    private HelloWorldHandler helloWorldHandler;
 
 
     /**
@@ -44,6 +45,7 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
         connectionCountHandler = new ConnectionCountHandler();
         connectionLogSaver = new ConnectionLogSaver();
         annotationHandlerMapping = new AnnotationHandlerMapping();
+        helloWorldHandler = new HelloWorldHandler();
 
         //Load connection logs and convert them to server statistic.
         ConnectionLogLoader connectionLogLoader = new ConnectionLogLoader();
@@ -80,6 +82,7 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
 
+
         RequestStatisticHandler requestStatisticHandler = new RequestStatisticHandler();
         requestStatisticHandler.setConnectionLogSaver(connectionLogSaver);
         requestStatisticHandler.setServerStatistic(serverStatistic);
@@ -95,7 +98,8 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
 
         //Outbound handler that handle information about redirect urls right after HttpTestServerHandler send it.
         p.addLast(requestStatisticHandler.getRedirectHandler());
-        p.addLast(new HelloWorldHandler());
+        p.addLast(requestStatisticHandler.getConnectionEndedHandler());
+        p.addLast(helloWorldHandler);
         p.addLast(httpTestServerHandler);
     }
 
@@ -105,5 +109,6 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
      */
     public void stop(){
         connectionLogSaver.interrupt();
+        serverStatistic.stopMerging();
     }
 }

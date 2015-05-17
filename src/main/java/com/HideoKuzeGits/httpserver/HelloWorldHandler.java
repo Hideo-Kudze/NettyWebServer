@@ -1,29 +1,30 @@
 package com.HideoKuzeGits.httpserver;
 
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.*;
 import io.netty.util.ReferenceCountUtil;
 
 import java.nio.charset.Charset;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * Return "hello" page.
  */
+@ChannelHandler.Sharable
 public class HelloWorldHandler extends ChannelInboundHandlerAdapter {
 
 
     @Override
-    public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
 
 
         String path;
@@ -46,10 +47,16 @@ public class HelloWorldHandler extends ChannelInboundHandlerAdapter {
                     @Override
                     public void run() {
 
-                        ctx.write(response).addListener(ChannelFutureListener.CLOSE);
-                        ctx.flush();
+                        if (HttpHeaders.isKeepAlive((HttpRequest)msg)) {
+                            response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+                            response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+                            ctx.writeAndFlush(response);
+                        }
+                        else {
+                            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                        }
                     }
-                }, 5000);
+                }, 10_000);
 
             } else
                 //If it is not "hello" page delegate processing to the next handlers.

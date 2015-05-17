@@ -26,11 +26,7 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
      */
     private Long startTimeNanoseconds;
     private Long startTimeMiliseconds;
-
-
-
     private Integer readBytes = 0;
-
     private Long lastWriteCompleteTime = 0l;
     private Integer writtenBytes = 0;
 
@@ -75,27 +71,56 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
         }
     };
 
+    private boolean connectionLogsSaved = false;
+
+    private ChannelOutboundHandler connectionEndedHandler = new ChannelOutboundHandlerAdapter() {
+
+
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+            ctx.write(msg, promise).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    connectionEnded();
+                }
+            });
+        }
+    };
+
 
     /**
      * Connection established.
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
-        startTimeNanoseconds = System.nanoTime();
-        startTimeMiliseconds = System.currentTimeMillis();
-        InetSocketAddress inetSocketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-        ip = inetSocketAddress.getAddress().getHostAddress();
+        setIpAndStartTime(ctx);
         super.channelActive(ctx);
     }
+
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
+
+        if (connectionLogsSaved)
+            setIpAndStartTime(ctx);
+
+        connectionLogsSaved = false;
         ByteBuf byteBuf = (ByteBuf) msg;
         readBytes += byteBuf.readableBytes() + byteBuf.readerIndex();
         super.channelRead(ctx, msg);
     }
+
+
+    private void setIpAndStartTime(ChannelHandlerContext ctx) {
+        connectionLogsSaved = false;
+        startTimeNanoseconds = System.nanoTime();
+        startTimeMiliseconds = System.currentTimeMillis();
+        InetSocketAddress inetSocketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+        ip = inetSocketAddress.getAddress().getHostAddress();
+    }
+
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -113,15 +138,40 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
     }
 
     /**
-     * Calls when connection ended. Save connection logs. Merge server statistic with new log.
+     * Calls when connection ended.
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
-        ConnectionLog connectionLog = createConnectionLog();
-        connectionLogSaver.save(connectionLog);
-        serverStatistic.addData(connectionLog);
+        connectionEnded();
         super.channelInactive(ctx);
+    }
+
+
+    /**
+     * Save connection logs. Merge server statistic with new log.
+     */
+    private void connectionEnded() {
+
+        if (!connectionLogsSaved) {
+            ConnectionLog connectionLog = createConnectionLog();
+            connectionLogSaver.save(connectionLog);
+            serverStatistic.addData(connectionLog);
+        }
+        connectionLogsSaved = true;
+
+        resetVariables();
+
+    }
+
+    private void resetVariables() {
+        url = null;
+        ip = null;
+        redirectUri = null;
+        startTimeNanoseconds = null;
+        startTimeMiliseconds = null;
+        readBytes = 0;
+        lastWriteCompleteTime = 0l;
+        writtenBytes = 0;
     }
 
     public ChannelHandler getUrlHandler() {
@@ -130,6 +180,7 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
 
     /**
      * Process request statistic and produce connection log.
+     *
      * @return log of this request.
      */
     public ConnectionLog createConnectionLog() {
@@ -137,7 +188,7 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
         Integer speed = 0;
         Long writeDuration = lastWriteCompleteTime - startTimeNanoseconds;
         if (writeDuration != 0)
-            speed =  (int)(writtenBytes* 1e9 / writeDuration);
+            speed = (int) (writtenBytes * 1e9 / writeDuration);
 
         ConnectionLog connectionLog = new ConnectionLog(ip, url, startTimeMiliseconds, readBytes, writtenBytes);
         connectionLog.setRedirectUrl(redirectUri);
@@ -149,6 +200,9 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
         return redirectHandler;
     }
 
+    public ChannelOutboundHandler getConnectionEndedHandler() {
+        return connectionEndedHandler;
+    }
 
     public void setConnectionLogSaver(ConnectionLogSaver connectionLogSaver) {
         this.connectionLogSaver = connectionLogSaver;
