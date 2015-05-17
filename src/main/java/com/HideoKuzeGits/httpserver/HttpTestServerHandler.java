@@ -10,9 +10,10 @@ import io.netty.handler.codec.http.*;
 
 import java.nio.charset.Charset;
 
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
 
 /**
  * Delegate http Request processing to specific controller.
@@ -29,13 +30,12 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
 
 
     /**
-     *
      * Process http request.
      *
      * @param msg {@link HttpRequest} or {@link LastHttpContent} instance that was received from {@link HttpRequestDecoder}.
      */
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+    protected void channelRead0(final ChannelHandlerContext ctx, Object msg) throws Exception {
 
         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
         response.headers().add("content-type", "text/html; charset=UTF-8");
@@ -71,14 +71,15 @@ public class HttpTestServerHandler extends SimpleChannelInboundHandler<Object> {
                 response.content().writeBytes(bodyBites);
             }
 
-            ctx.write(response).addListener(ChannelFutureListener.CLOSE);
-         }
-
-        //If request ended flush context
-        if (msg instanceof LastHttpContent) {
-            ctx.flush();
+            if (HttpHeaders.isKeepAlive(request)) {
+                response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+                response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+                ctx.writeAndFlush(response);
+            }
+            else {
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            }
         }
-
     }
 
     @Override
