@@ -107,6 +107,8 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
             setIpAndStartTime(ctx);
 
         connectionLogsSaved = false;
+
+
         ByteBuf byteBuf = (ByteBuf) msg;
         readBytes += byteBuf.readableBytes() + byteBuf.readerIndex();
         super.channelRead(ctx, msg);
@@ -126,7 +128,7 @@ public class RequestStatisticHandler extends ChannelDuplexHandler {
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
         final ByteBuf byteBuf = (ByteBuf) msg;
-        writtenBytes += byteBuf.readableBytes() + byteBuf.readerIndex();
+        writtenBytes += byteBuf.readableBytes();
 
         ctx.write(msg, promise).addListener(new ChannelFutureListener() {
             @Override

@@ -68,7 +68,6 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
 
 
         httpTestServerHandler.setMapping(annotationHandlerMapping);
-
     }
 
 
@@ -105,7 +104,7 @@ public class HttpTestServerInitializer extends ChannelInitializer<SocketChannel>
 
 
     /**
-     * Stops saving logs,
+     * Stops saving logs and updating statistic,
      */
     public void stop(){
         connectionLogSaver.interrupt();
